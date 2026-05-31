@@ -25,6 +25,8 @@ const el = (tag, cls, content) => {
   return node;
 };
 
+const FALLBACK_IMG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" rx="20" fill="#ffffff"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="22" fill="#334155">Imagem indisponível</text></svg>');
+
 function toast(message, type = 'success') {
   const box = $('#toast');
   if (!box) return;
@@ -92,6 +94,7 @@ function showApp() {
   $('#appShell').hidden = false;
   renderEverything();
   bindAppOnce();
+  setTitle(APP.page);
   updateClock();
   if (!APP.clockTimer) APP.clockTimer = setInterval(updateClock, 1000);
   toast('Sistema iniciado com sucesso ✅');
@@ -138,9 +141,16 @@ function updateClock() {
   if ($('#clockText')) $('#clockText').textContent = `Atualizado em ${d} às ${h}`;
 }
 
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
 function setTitle(page) {
   const titles = {
-    home: 'Boa noite, Gestor',
+    home: `${greeting()}, Gestor`,
     epis: 'EPIs',
     riscos: 'Riscos',
     empresas: 'Empresas',
@@ -149,7 +159,8 @@ function setTitle(page) {
     nrs: 'Normas Regulamentadoras',
     painel: 'Painel de recursos',
   };
-  $('#pageTitle').textContent = titles[page] || 'SST - Segurança do trabalho';
+  const title = $('#pageTitle');
+  if (title) title.textContent = titles[page] || 'SST - Segurança do trabalho';
 }
 
 function openPage(page) {
@@ -172,7 +183,7 @@ function bindAppOnce() {
   if (APP.bound) return;
   APP.bound = true;
 
-  $$('.nav-btn, .brand').forEach(btn => btn.addEventListener('click', () => openPage(btn.dataset.page)));
+  $$('.nav-btn, .brand').forEach(btn => btn.addEventListener('click', () => btn.dataset.page && openPage(btn.dataset.page)));
   $$('[data-jump]').forEach(btn => btn.addEventListener('click', () => openPage(btn.dataset.jump)));
   $$('[data-scroll]').forEach(btn => btn.addEventListener('click', () => scrollToSelector(btn.dataset.scroll)));
 
@@ -240,6 +251,16 @@ function bindAppOnce() {
   });
 
   bindGenerator();
+
+  document.addEventListener('keydown', e => {
+    if (!e.altKey || e.ctrlKey || e.metaKey) return;
+    const pages = ['home', 'epis', 'riscos', 'empresas', 'frases', 'w2h', 'nrs', 'painel'];
+    const idx = Number(e.key) - 1;
+    if (pages[idx]) {
+      e.preventDefault();
+      openPage(pages[idx]);
+    }
+  });
 }
 
 function renderEverything() {
@@ -402,7 +423,7 @@ function renderEpis() {
     img.src = item.imagem || '';
     img.alt = item.nome || 'EPI';
     img.loading = 'lazy';
-    img.onerror = () => img.src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" rx="20" fill="#ffffff"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="22" fill="#334155">Imagem indisponível</text></svg>');
+    img.onerror = () => { img.onerror = null; img.src = FALLBACK_IMG; };
 
     card.innerHTML = `<span class="ca-badge">CA ${item.ca || 'N/I'}</span>`;
     const favBtn = el('button', `favorite-btn ${fav ? 'active' : ''}`, fav ? '★' : '☆');
@@ -427,7 +448,15 @@ function renderEpis() {
     const btn = el('button', 'copy-btn', '📋 Copiar CA');
     btn.type = 'button';
     btn.dataset.copy = item.ca || '';
-    btn.addEventListener('click', e => e.stopPropagation());
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      try {
+        await copyText(item.ca || '');
+        toast('CA copiado para área de transferência 📋');
+      } catch {
+        toast('Não foi possível copiar o CA.', 'error');
+      }
+    });
     actions.appendChild(detail);
     actions.appendChild(btn);
     card.appendChild(actions);
@@ -448,13 +477,21 @@ function bindEpiModal() {
   });
   $('#copyModalCA')?.addEventListener('click', async () => {
     if (!APP.currentEpi) return;
-    await copyText(APP.currentEpi.ca || '');
-    toast('CA copiado.');
+    try {
+      await copyText(APP.currentEpi.ca || '');
+      toast('CA copiado.');
+    } catch {
+      toast('Não foi possível copiar o CA.', 'error');
+    }
   });
   $('#copyModalFull')?.addEventListener('click', async () => {
     if (!APP.currentEpi) return;
-    await copyText(`${APP.currentEpi.nome} — CA ${APP.currentEpi.ca || 'N/I'}`);
-    toast('Nome + CA copiado.');
+    try {
+      await copyText(`${APP.currentEpi.nome} — CA ${APP.currentEpi.ca || 'N/I'}`);
+      toast('Nome + CA copiado.');
+    } catch {
+      toast('Não foi possível copiar.', 'error');
+    }
   });
   $('#toggleModalFavorite')?.addEventListener('click', () => {
     if (!APP.currentEpi) return;
@@ -466,13 +503,17 @@ function openEpiModal(item) {
   APP.currentEpi = item;
   const modal = $('#epiModal');
   if (!modal) return;
-  $('#epiModalImg').src = item.imagem || '';
-  $('#epiModalImg').onerror = () => $('#epiModalImg').src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" rx="20" fill="#ffffff"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="22" fill="#334155">Imagem indisponível</text></svg>');
-  $('#epiModalTitle').textContent = item.nome || 'EPI';
-  $('#epiModalCategory').textContent = `${categoryIcon(item.categoria)} ${categoryName(item.categoria)}`;
-  $('#epiModalCA').textContent = `CA ${item.ca || 'N/I'}`;
+  const modalImg = $('#epiModalImg');
+  if (modalImg) {
+    modalImg.onerror = () => { modalImg.onerror = null; modalImg.src = FALLBACK_IMG; };
+    modalImg.src = item.imagem || FALLBACK_IMG;
+  }
+  if ($('#epiModalTitle')) $('#epiModalTitle').textContent = item.nome || 'EPI';
+  if ($('#epiModalCategory')) $('#epiModalCategory').textContent = `${categoryIcon(item.categoria)} ${categoryName(item.categoria)}`;
+  if ($('#epiModalCA')) $('#epiModalCA').textContent = `CA ${item.ca || 'N/I'}`;
   updateModalFavoriteButton();
   modal.classList.add('show');
+  document.body.classList.add('modal-open');
   modal.setAttribute('aria-hidden', 'false');
 }
 
@@ -488,6 +529,7 @@ function closeEpiModal() {
   const modal = $('#epiModal');
   if (!modal) return;
   modal.classList.remove('show');
+  document.body.classList.remove('modal-open');
   modal.setAttribute('aria-hidden', 'true');
   APP.currentEpi = null;
 }
@@ -588,6 +630,7 @@ function renderAlerts() {
 function bindGenerator() {
   if (APP.generatorBound) return;
   APP.generatorBound = true;
+  if ($('#dataInput') && !$('#dataInput').value) $('#dataInput').value = new Date().toISOString().slice(0, 10);
   $('#gerarFrasesBtn')?.addEventListener('click', () => {
     const empresa = $('#empresaInput')?.value.trim() || 'EMPRESA';
     const data = $('#dataInput')?.value || new Date().toISOString().slice(0, 10);
