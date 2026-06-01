@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preload" href="assets/mascote-sst-premium.gif" as="image" />
   <link rel="stylesheet" href="CSS/style.css" />
   <script src="JS/data.js" defer></script>
   <script src="JS/app.js" defer></script>
@@ -21,7 +22,7 @@
   <section class="boot-screen" id="bootScreen" aria-label="Carregando SST PRIME">
     <div class="boot-card">
       <div class="boot-top">
-        <span class="boot-shield">🛡</span>
+        <span class="boot-shield boot-mascot"><img src="assets/mascote-sst-premium.gif" alt="Mascote SST carregando" /></span>
         <div>
           <small>CARREGANDO PLATAFORMA</small>
           <h1>SST - Segurança do trabalho</h1>
@@ -57,7 +58,7 @@
       <div class="animated-ring" id="animatedRing" aria-hidden="true"></div>
       <form class="login-card" id="loginForm">
         <div class="login-brand">
-          <span>🛡</span>
+          <span class="login-mascot"><img src="assets/mascote-sst-premium.gif" alt="Mascote SST" /></span>
           <div>
             <h2>Login</h2>
             <small>Acesso ao sistema técnico</small>
@@ -143,6 +144,14 @@
             </div>
 
             <div class="hero-side">
+              <article class="mascot-card" aria-label="Mascote SST">
+                <div>
+                  <small>MASCOTE OFICIAL</small>
+                  <h3>Segurança começa na prevenção</h3>
+                  <p>Um apoio visual simpático para deixar o portal mais vivo, sem pesar a navegação.</p>
+                </div>
+                <img src="assets/mascote-sst-premium.gif" alt="Mascote animado usando EPIs" loading="eager" />
+              </article>
               <article class="hero-info-card">
                 <small>VISÃO RÁPIDA</small>
                 <h3>Sistema limpo e corporativo</h3>
@@ -324,6 +333,11 @@
       </div>
     </article>
   </div>
+
+  <button class="floating-mascot" id="floatingMascot" type="button" title="Voltar ao início" aria-label="Mascote SST - voltar ao início">
+    <img src="assets/mascote-sst-premium.gif" alt="" aria-hidden="true" />
+    <span>Início</span>
+  </button>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
