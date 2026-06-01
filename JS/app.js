@@ -83,6 +83,7 @@ function boot() {
 }
 
 function showAuth() {
+  document.body.classList.remove('logged-in');
   $('#authScreen').hidden = false;
   $('#appShell').hidden = true;
   setTimeout(() => $('#loginUser')?.focus(), 120);
@@ -90,6 +91,7 @@ function showAuth() {
 
 function showApp() {
   if (!dataReady()) return showAuth();
+  document.body.classList.add('logged-in');
   $('#authScreen').hidden = true;
   $('#appShell').hidden = false;
   renderEverything();
@@ -186,6 +188,7 @@ function bindAppOnce() {
   $$('.nav-btn, .brand').forEach(btn => btn.addEventListener('click', () => btn.dataset.page && openPage(btn.dataset.page)));
   $$('[data-jump]').forEach(btn => btn.addEventListener('click', () => openPage(btn.dataset.jump)));
   $$('[data-scroll]').forEach(btn => btn.addEventListener('click', () => scrollToSelector(btn.dataset.scroll)));
+  $('#floatingMascot')?.addEventListener('click', () => openPage('home'));
 
   $('#logoutButton')?.addEventListener('click', () => {
     sessionStorage.removeItem(APP.sessionKey);
@@ -550,7 +553,13 @@ function linkCard(title, desc, link, label = 'Abrir') {
   card.appendChild(el('h3', '', title || 'Sem título'));
   card.appendChild(el('p', '', desc || ''));
   const btn = el('button', 'open-btn', label);
-  btn.addEventListener('click', () => link && window.open(link, '_blank', 'noopener,noreferrer'));
+  btn.type = 'button';
+  if (!link) {
+    btn.disabled = true;
+    btn.textContent = 'Link indisponível';
+  } else {
+    btn.addEventListener('click', () => window.open(link, '_blank', 'noopener,noreferrer'));
+  }
   card.appendChild(btn);
   return card;
 }
