@@ -1,0 +1,11 @@
+{
+  "name": "SST Prime — Central Técnica",
+  "short_name": "SST Prime",
+  "description": "Central técnica de Segurança do Trabalho.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#07110c",
+  "theme_color": "#17a85b",
+  "lang": "pt-BR",
+  "icons": []
+}
